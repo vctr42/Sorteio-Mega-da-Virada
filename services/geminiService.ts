@@ -1,18 +1,26 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const API_KEY = process.env.API_KEY || "";
-
 export const getNumberInsights = async (numbers: number[]): Promise<any> => {
-  if (!API_KEY) return null;
+  // Acessa a chave apenas no momento da chamada para evitar crash top-level
+  const apiKey = (process.env as any).API_KEY;
   
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  if (!apiKey) {
+    console.warn("API_KEY não configurada no ambiente.");
+    return {
+      analysis: "Seus números parecem promissores! (Configure a API_KEY para uma análise profunda via IA)",
+      funFact: "Você sabia que as chances de ganhar na Mega são de 1 em 50 milhões?",
+      patternObserved: "Vibe de sorte detectada."
+    };
+  }
+  
+  const ai = new GoogleGenAI({ apiKey });
   
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Analise estes números gerados aleatoriamente: ${numbers.join(", ")}. 
-      Forneça uma análise divertida em Português sobre possíveis padrões, curiosidades matemáticas ou 'vibe' desses números.`,
+      contents: `Analise estes números da Mega da Virada: ${numbers.join(", ")}. 
+      Forneça uma análise divertida em Português sobre possíveis padrões, curiosidades matemáticas ou a 'energia' desses números.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -27,7 +35,7 @@ export const getNumberInsights = async (numbers: number[]): Promise<any> => {
       }
     });
 
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || "{}");
   } catch (error) {
     console.error("Gemini Insight Error:", error);
     return null;
